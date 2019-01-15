@@ -18,8 +18,8 @@ The data dictionary provides variable names and codes;
 it's in this repository; the codes for the person records begin on page 35.
 
 target column:
-AL: MAR(Marital status)
-BS: WAGP (Wages or salary income past 12 months)
-??BR: SSP(what is social security income?)
-BN: SCHL (Educational attainment)
-Race:RAC1P, RAC2P, RAC3P. Which one to use?
+1. AL: MAR(Marital status)
+2. BS: WAGP (Wages or salary income past 12 months)
+3. ??BR: SSP(what is social security income?)
+4. BN: SCHL (Educational attainment)
+5. Race:RAC1P, RAC2P, RAC3P. Which one to use?
