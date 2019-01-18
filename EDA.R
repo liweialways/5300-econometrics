@@ -26,7 +26,15 @@ hist(new[new$RAC1P == 1, ]$WAGP, main = "Income of Race 1")
 # when RAC1P == 2, means "Black or African American alone":
 hist(new[new$RAC1P == 2, ]$SCHL, main = "Education atainment of Race 2")
 hist(new[new$RAC1P == 2, ]$WAGP, main = "Income of Race 2")
+# when RAC1P == 3, means "American Indian alone":
+hist(new[new$RAC1P == 3, ]$SCHL, main = "Education atainment of Race 3")
+hist(new[new$RAC1P == 3, ]$WAGP, main = "Income of Race 3")
+# when RAC1P == 6, means "Asian alone":
+hist(new[new$RAC1P == 6, ]$SCHL, main = "Education atainment of Race 6")
+hist(new[new$RAC1P == 6, ]$WAGP, main = "Income of Race 6")
 
+
+### select a sample from population
 # number of instances of each race:
 num_race <- c()
 for (i in 1:9){
