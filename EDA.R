@@ -10,13 +10,38 @@ View(research_data)
 nrow(research_data)
 
 ### EDA
-# descriptive statistics
+## descriptive statistics
 summary(research_data)
-
-# exclude all missing values
+## exclude all missing values
 new <- na.exclude(research_data) 
 summary(new)
 nrow(new)
+
+## group educational attainment levels into 5 levels: 
+# A: no high school degree; B: with high school degree; 
+# C: with colleage degree; D: with professional degree;
+# E: with master degree; F: with Doctor degree
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'SCHL'] <= 15) {
+    new[rows, 'EducLevel'] = 'A'
+  }
+  if (new[rows, 'SCHL'] >= 16 & new[rows, 'SCHL'] <= 19) {
+    new[rows, 'EducLevel'] =  'B'
+  }
+  if (new[rows, 'SCHL'] >= 20 & new[rows, 'SCHL'] <= 21) {
+    new[rows, 'EducLevel'] = 'C'
+  }
+  if (new[rows, 'SCHL'] == 23) {
+    new[rows, 'EducLevel'] = 'D'
+  }
+  if (new[rows, 'SCHL'] == 22) {
+    new[rows, 'EducLevel'] = 'E'
+  }
+  if (new[rows, 'SCHL'] == 24) {
+    new[rows, 'EducLevel'] = 'F'
+  }
+}
+View(new)
 
 # dataset is too large to draw a histogram for the whole dataset.
 # so we draw the histogram of several subsets:
