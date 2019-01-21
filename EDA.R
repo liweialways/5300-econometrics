@@ -77,7 +77,7 @@ names(df_num) <- c('Race', 'Number')
 df_num['ratio'] <- df_num['Number'] / sum(df_num['Number'])
 df_num['SampleNum'] <- round(sum(df_num['Number']) * df_num['ratio'] * 0.1, 0)
 df_num
-
+set.seed(1000)
 race1 <- new[sample(nrow(new[new['RAC1P'] == 1, ]), size = df_num[1, 'SampleNum']), ]
 race2 <- new[sample(nrow(new[new['RAC1P'] == 2, ]), size = df_num[2, 'SampleNum']), ]
 race3 <- new[sample(nrow(new[new['RAC1P'] == 3, ]), size = df_num[3, 'SampleNum']), ]
@@ -88,5 +88,6 @@ race7 <- new[sample(nrow(new[new['RAC1P'] == 7, ]), size = df_num[7, 'SampleNum'
 race8 <- new[sample(nrow(new[new['RAC1P'] == 8, ]), size = df_num[8, 'SampleNum']), ]
 race9 <- new[sample(nrow(new[new['RAC1P'] == 9, ]), size = df_num[9, 'SampleNum']), ]
 # here is our sample:
+set.seed(1000)
 sample <- rbind(race1, race2, race3, race4, race5, race6, race7, race8, race9)
 sample
