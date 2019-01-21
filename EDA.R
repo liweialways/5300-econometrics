@@ -88,6 +88,5 @@ race7 <- new[sample(nrow(new[new['RAC1P'] == 7, ]), size = df_num[7, 'SampleNum'
 race8 <- new[sample(nrow(new[new['RAC1P'] == 8, ]), size = df_num[8, 'SampleNum']), ]
 race9 <- new[sample(nrow(new[new['RAC1P'] == 9, ]), size = df_num[9, 'SampleNum']), ]
 # here is our sample:
-set.seed(1000)
 sample <- rbind(race1, race2, race3, race4, race5, race6, race7, race8, race9)
 sample
