@@ -27,7 +27,7 @@ target column:
 sample critieria:
 1. according to the ratio of the races in the population, we randomly choose sample and keep the same ratio.
 2. exclude the people who is in the following status: b, 3, 6
-  column: ESR 1 ---Employment status recode
+  /n column: ESR 1 ---Employment status recode
   b .N/A (less than 16 years old)
   1 .Civilian employed, at work
   2 .Civilian employed, with a job but not at work
