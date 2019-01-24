@@ -36,7 +36,7 @@ for (rows in 1:nrow(new)) {
     new[rows, 'EducLevel'] = 'C'
   }
   if (new[rows, 'SCHL'] == 23) {
-    new[rows, 'EducLevel'] = 'D'
+    new[rows, 'EducLevel'] = 'D'    
   }
   if (new[rows, 'SCHL'] == 22) {
     new[rows, 'EducLevel'] = 'E'
@@ -46,3 +46,12 @@ for (rows in 1:nrow(new)) {
   }
 }
 nrow(new)
+
+###Samle Descriptive Statistic
+#Columns name change
+new <- new[c("SERIALNO", "SPORDER", "PERNP", "RAC1P", "EducLevel")]
+colnames(new) <- c("Housing_Unit","Person_Number", "Total_Person_Earning", "Race", "EducLevel" )
+summary(new)
+
+earning_pic <- ggplot(new, aes(x = Total_Person_Earning)) + geom_point(stat = "count") + labs(title = "Total Personal Earning in WA")
+earning_pic
