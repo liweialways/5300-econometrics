@@ -1,6 +1,6 @@
 ---
 title: "LMA"
-author: "Ziyu Jin"
+author: "W"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document:
@@ -13,13 +13,11 @@ output:
 # Purpose: Analyze the the relation between individule earnings with his/her educational attainment and the relation between higher education and race/ethnicity
 # Date: January 29, 2019
 # Author: Ziyu Jin
-
 ```
 
 ```{r echo = FALSE}
 # Clear environment of variables and functions
 rm(list = ls(all = TRUE)) 
-
 # Clear environmet of packages
 if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sessionInfo()$otherPkgs), sep=""), detach, character.only = TRUE, unload = TRUE)
 ```
@@ -31,7 +29,6 @@ Work with Washington State data
 ```{r}
 ### Load data
 wa_data <- read.csv('ss16pwa.csv')
-
 ### Subset and focus on the data of interest
 # SERIALNO: Housing unit/GQ person serial number  
 # SPORDER: Person number
@@ -48,22 +45,17 @@ summary(research_data)
 
 ```{r}
 ### Data cleaning
-
 ## exclude all missing values
 new <- na.exclude(research_data) 
 ## exclude those who cannot work due to age under 16 years old or not in labor force.
 new <- new[new['ESR'] != 6, ]
-
 ## group educational attainment levels into 5 levels: 
 # A: no high school degree; B: with high school degree; 
 # C: with colleage degree; D: with professional degree;
 # E: with master degree; F: with Doctor degree
 for (rows in 1:nrow(new)) {
-  if (new[rows, 'SCHL'] <= 15) {
-    new[rows, 'EducLevel'] = 'A'
-  }
-  if (new[rows, 'SCHL'] >= 16 & new[rows, 'SCHL'] <= 19) {
-    new[rows, 'EducLevel'] =  'B'
+  if (new[rows, 'SCHL'] <= 19) {
+    new[rows, 'EducLevel'] = 'B'
   }
   if (new[rows, 'SCHL'] >= 20 & new[rows, 'SCHL'] <= 21) {
     new[rows, 'EducLevel'] = 'C'
@@ -78,7 +70,9 @@ for (rows in 1:nrow(new)) {
     new[rows, 'EducLevel'] = 'F'
   }
 }
+```
 
+```{r}
 ### Redefine variable citizenship
 # 1: US Citizen
 # 2: Not US Citizen
@@ -94,7 +88,15 @@ for (rows in 1:nrow(new)) {
 #Columns name change
 new <- new[c("SERIALNO", "SPORDER","SEX", "CIT", "PERNP", "RAC1P", "EducLevel")]
 colnames(new) <- c("Housing_Unit","Person_Number", "Sex", "Citizenship", "Total_Person_Earning", "Race", "EducLevel")
-
+new$Citizenship <- as.factor(new$Citizenship)
+new$Sex <- as.factor(new$Sex)
+new$Race <- as.factor(new$Race)
+new$EducLevel <- as.factor(new$EducLevel)
 summary(new)
+```
+
+```{r}
+mod <- lm(Total_Person_Earning ~ EducLevel + Sex + Citizenship + Race, data = new)
+summary(mod)
 ```
 
