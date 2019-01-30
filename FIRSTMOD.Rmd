@@ -100,3 +100,80 @@ mod <- lm(Total_Person_Earning ~ EducLevel + Sex + Citizenship + Race, data = ne
 summary(mod)
 ```
 
+
+#Descriptive Statistics on Sample Criteria
+===============================
+```{r echo=FALSE}
+str(sample)
+summary(sample)
+```
+
+
+```{r echo=FALSE}
+
+wage_pic <- ggplot(sample, aes(x = WAGP)) + geom_point(stat = "count") + labs(title = "Wage in WA")
+wage_pic
+
+```
+
+In our sample data set, the mean of incomes in WA in the past 12 monthes is about $51232; minimum wage is $0; median is $36000; mean is $51232; maximum is $467000.  
+
+To explain those $0 wages, since we have excluded children and people who are not in labor force, one assumption can be that there are unemployed worker who received no income.
+
+Besides, since there are outliers shown in the graph of wage in WA, median is a more appopriate selection to explain the middle of this data set.
+
+
+
+
+# A: no high school degree; B: with high school degree; 
+# C: with colleage degree; D: with professional degree;
+# E: with master degree; F: with Doctor degree
+
+```{r echo=FALSE}
+EducLevel_pic <- ggplot(sample, aes(x = EducLevel)) + geom_histogram(stat = "count") + labs(title = "Educational Level in WA")
+EducLevel_pic
+
+```
+
+Since it is a qualitive variable, we draw a histogram graph to explain the data set.
+
+From the graph, we can tell that the least educational attainment people get in WA is doctor degree; most people have high school degrees and college degrees.
+
+
+
+
+# A: no high school degree; B: with high school degree; 
+# C: with college degree; D: with professional degree;
+# E: with master degree; F: with Doctor degree
+```{r echo=FALSE}
+
+Educ_wage_pic <- ggplot(sample, aes(x = EducLevel, y = WAGP)) + geom_histogram(stat = "identity")
+Educ_wage_pic
+
+```
+
+
+The histogram graph shows the relationship between educational level and wages of our sample data. From the graph, we can tell that people without high school degree earn the least income within the group; people with college degree make the most money compare to other groups.
+
+```{r echo=FALSE}
+race_wa <- ggplot(sample, aes(x = RAC1P)) + geom_histogram(stat = "count") + labs(title = "Race in WA")
+race_wa
+
+```
+
+
+From the graph, we can tell that the majority of people in WA are white; the second one is Asian only group; there are little Alaska Native or American Indian in WA.
+
+
+
+# A: no high school degree; B: with high school degree; 
+# C: with college degree; D: with professional degree;
+# E: with master degree; F: with Doctor degree
+```{r echo=FALSE}
+
+wage_educ_race_pic <- ggplot(sample, aes(EducLevel, WAGP, fill = RAC1P)) + geom_bar(position = "dodge", stat="identity")
+wage_educ_race_pic
+
+```
+
+The graph shows the relationship between wages, educational level, and races. We can tell that whites are the highest group on every educational level; Asians are the second educated group in WA. 
