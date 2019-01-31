@@ -1,5 +1,5 @@
 ---
-title: "LMA-with age and work_type"
+title: "LMA-with age and work_type, exlude self-care difficulty"
 author: "Wei Li, Florence Yan, Ziyu Jin"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -53,7 +53,8 @@ wa_data <- read.csv('ss16pwa.csv')
 # MAR: marrige status
 # AGEP: age
 # COW: class of worker
-research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'MAR', 'WKHP', 'AGEP', 'COW')]
+# DDRS: self-care difficulty
+research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'MAR', 'WKHP', 'AGEP', 'COW', 'DDRS')]
 summary(research_data)
 ```
 
@@ -67,6 +68,8 @@ new <- new[new['ESR'] != 6, ]
 new <- new[new['PERNP'] >= 0000001, ]
 ## full time workers
 new <- new[new['WKHP'] >= 40, ]
+## exclude people who has self-care difficult
+new <- new[new['DDRS'] == 2, ]
 ```
 
 ```{r}
@@ -165,7 +168,7 @@ for (rows in 1:nrow(new)) {
 new <- new[c("SERIALNO", "SPORDER","SEX", "CIT", "PERNP", "RAC1P", "ESR", "MAR", "EducLevel",  "WKHP", "AGEP", "COW")]
 
 colnames(new) <- c("Housing_Unit", "Person_Number", "Sex", "Citizenship", "Total_Person_Earning", "Race", "Employment_status", "Marrige", "EducLevel", "Work_hour", "Age", "Work_type")
-View(new)
+
 # Change the data type
 new$Citizenship <- as.factor(new$Citizenship)
 new$Sex <- as.factor(new$Sex)
@@ -174,7 +177,6 @@ new$EducLevel <- as.factor(new$EducLevel)
 new$Marrige <- as.factor(new$Marrige)
 new$Employment_status <- as.factor(new$Employment_status)
 new$Work_type <- as.factor(new$Work_type)
-summary(new)
 ```
 
 # Data modeling
