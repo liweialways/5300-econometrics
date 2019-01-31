@@ -49,7 +49,9 @@ wa_data <- read.csv('ss16pwa.csv')
 # SCHL: Educational attainment
 # RAC1P: Recoded detailed race code               
 # ESR: Employment status
-research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'MAR')]
+# WKHP: Usual hours worked per week past 12 months
+# MAR: marrige status
+research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'MAR', 'WKHP')]
 summary(research_data)
 ```
 
@@ -59,6 +61,11 @@ summary(research_data)
 new <- na.exclude(research_data) 
 # exclude those who cannot work due to age under 16 years old or not in labor force.
 new <- new[new['ESR'] != 6, ]
+summary(new)
+```
+```{r}
+new <- new[new$PERNP > 0, ]
+summary(new)
 ```
 
 ```{r}
@@ -116,24 +123,27 @@ for (rows in 1:nrow(new)) {
 
 ```
 
+
 ```{r}
 # Columns name change
-new <- new[c("SERIALNO", "SPORDER","SEX", "CIT", "PERNP", "RAC1P", "EducLevel", "MAR")]
-colnames(new) <- c("Housing_Unit","Person_Number", "Sex", "Citizenship", "Total_Person_Earning", "Race", "EducLevel", "Marrige")
-
+colnames(new)
+new <- new[c("SERIALNO", "SPORDER","SEX", "CIT", "PERNP", "RAC1P", "ESR", "MAR", "EducLevel",  "WKHP")]
+colnames(new) <- c("Housing_Unit","Person_Number", "Sex", "Citizenship", "Total_Person_Earning", "Race", "Employment_status", "Marrige", "EducLevel", "Work_hour" )
+View(new)
 # Change the data type
 new$Citizenship <- as.factor(new$Citizenship)
 new$Sex <- as.factor(new$Sex)
 new$Race <- as.factor(new$Race)
 new$EducLevel <- as.factor(new$EducLevel)
 new$Marrige <- as.factor(new$Marrige)
+new$Employment_status <- as.factor(new$Employment_status)
 
 summary(new)
 ```
 
 # Data modeling
 ```{r}
-mod <- lm(Total_Person_Earning ~ EducLevel + Sex + Citizenship + Race + Marrige, data = new)
+mod <- lm(Total_Person_Earning ~ EducLevel + Sex + Citizenship + Race + Marrige + Employment_status, data = new)
 summary(mod)
 ```
 
