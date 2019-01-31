@@ -50,7 +50,7 @@ wa_data <- read.csv('ss16pwa.csv')
 # RAC1P: Recoded detailed race code               
 # ESR: Employment status
 # WKHP: Usual hours worked per week past 12 months
-research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'WKHP')]
+research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'MAR')]
 summary(research_data)
 ```
 
@@ -114,6 +114,10 @@ new$Sex <- as.factor(new$Sex)
 new$Race <- as.factor(new$Race)
 new$EducLevel <- as.factor(new$EducLevel)
 
+summary(new)
+```
+```{r}
+new <- new[new$Total_Person_Earning>0, ]
 summary(new)
 ```
 
