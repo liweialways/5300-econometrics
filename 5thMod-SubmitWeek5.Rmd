@@ -191,8 +191,13 @@ mod <- lm(log(Earnings) ~ EducLevel + Gender + Citizenship + Race + Marrige_Stat
 summary(mod)
 ```
 
+#Sample Selection Criteria
 
-#Descriptive statistics and exploratory data analysis
++ We use individual-level data in Washington State from the 2016 American Community Survey (ACS) to examine earning gaps between individuals with different educational attainments. The American Community Survey (ACS) is a national survey that uses continuous measurement methods. In this survey, a series of monthly samples produce annual estimates for the same small areas (census tracts and block groups) formerly surveyed via the decennial census long-form sample. In our study, we define workers as individuals who are over 16 years old and full-time workers who work more than or equal to 40 hours per week. Our sample consists of 24,710 individuals in total. Specifically, there are 12,050 people with or without high school diploma, 8,830 people with college degree, 620 people with professional degree, 2,775 people with master’s degree, and 435 people with doctor degree. Regarding total personal earning, we define it as individuals who earns over $1 during the past year. At last, we excluded the observations who has self-care difficulty or disabilities, in case these might bring disadvantage in earnings.
+
+
+
+# Descriptive statistics and exploratory data analysis
 ```{r echo=FALSE}
 str(new)
 ```
