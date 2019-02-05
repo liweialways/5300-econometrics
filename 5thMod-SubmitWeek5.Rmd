@@ -232,7 +232,7 @@ summary(new)
 
 
 ```{r echo=FALSE}
-boxplot(new$Total_Person_Earning, main = "Boxplot of earnings") 
+boxplot(new$Earnings, main = "Boxplot of earnings") 
 ```
 
 + From the boxplot we can see, there are extreme values on both ends. But the extreme large earnings seem to be more, so the distribution of the earnings should be positively skewed. Fo the skewed data, we would better use median to represent the majority's earning level.
@@ -250,7 +250,7 @@ EducLevel_pic
 # median earnings of each educlevel
 Educ_wage_pic <- new %>% 
   group_by(EducLevel) %>% 
-  summarise(med_earning = median(Total_Person_Earning)) %>% 
+  summarise(med_earning = median(Earnings)) %>% 
   ggplot(aes(x = EducLevel, y = med_earning)) +
   geom_histogram(stat = "identity")
 Educ_wage_pic
@@ -280,7 +280,7 @@ race_wa
 ```{r echo=FALSE}
 wage_educ_race_pic <- new %>% 
   group_by(Race, EducLevel) %>% 
-  summarise(med_earn = median(Total_Person_Earning)) %>% 
+  summarise(med_earn = median(Earnings)) %>% 
   ggplot(aes(x = EducLevel, y = med_earn, fill = Race)) +
   geom_bar(position = 'dodge', stat = 'identity')
 wage_educ_race_pic
