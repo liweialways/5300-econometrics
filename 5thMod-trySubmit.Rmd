@@ -19,20 +19,34 @@ output:
 # Research questions: 
 ## 1. In the state of Washington, how do earnings vary by educational attainment?
 ## 2. Does the premium for higher education vary by race?
+# Area of interest: Washington state
 # Date: January 29, 2019
 # Author: Wei Li, Florence Yan, Ziyu Jin
 ```
 
-```{r echo = FALSE}
+# About this research
+
+## Research question
+
++ In the state of Washington, how do earnings vary by educational attainment?
+
++ Does the premium for higher education vary by race?
+
+## Research area
+
++ Washington state
+
+```{r echo = FALSE }
 # Clear environment of variables and functions
 rm(list = ls(all = TRUE)) 
 # Clear environmet of packages
 if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sessionInfo()$otherPkgs), sep=""), detach, character.only = TRUE, unload = TRUE)
 ```
 
-```{r message = FALSE}
+```{r message = FALSE, echo = FALSE}
 library(tidyverse)
 library(ggplot2)
+library(lmtest) # for BPG test
 ```
 
 
@@ -73,8 +87,11 @@ new <- new[new['WKHP'] >= 40, ]
 new <- new[new['DDRS'] == 2, ]
 ## exclude people who has disability
 new <- new[new['DIS'] == 2, ]
+# exclude those who has a job but didn't work, or unemployed
+new <- new[new['ESR'] != 2 & new['ESR'] != 5 & new['ESR'] != 3, ]
 # exclude the column work hours 
 new <- new[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','ESR', 'MAR', 'AGEP', 'COW', 'DDRS', 'DIS')]
+
 summary(new)
 ```
 
@@ -102,6 +119,38 @@ for (rows in 1:nrow(new)) {
     new[rows, 'EducLevel'] = 'E'
   }
 }
+```
+
+```{r}
+# More fucoused on the 6 races:
+## 1. White
+## 2. Black
+## 3. Indian or Alaska
+## 4. Asian
+## 5. other single races
+## 6. multiple races
+
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'RAC1P'] == 1 ) {
+    new[rows, 'RAC1P'] = 1 # White
+  }
+  if (new[rows, 'RAC1P'] == 2) {
+    new[rows, 'RAC1P'] = 2 # Black
+  }
+  if (new[rows, 'RAC1P'] == 3 | new[rows, 'RAC1P'] == 4 | new[rows, 'RAC1P'] == 5) {
+    new[rows, 'RAC1P'] =  3 # Alaska or Indian or both
+  }
+  if (new[rows, 'RAC1P'] == 6) {
+    new[rows, 'RAC1P'] =  4 # Asian
+  }
+  if (new[rows, 'RAC1P'] == 7 | new[rows, 'RAC1P'] == 8) {
+    new[rows, 'RAC1P'] =  5 # Other single races
+  }
+  if (new[rows, 'RAC1P'] == 9) {
+    new[rows, 'RAC1P'] =  6 # Multiple races
+  }
+}
+
 ```
 
 ```{r}
@@ -185,10 +234,33 @@ new$Employment_Status <- as.factor(new$Employment_Status)
 new$Work_Type <- as.factor(new$Work_Type)
 ```
 
+```{r}
+# Correlation
+# There is only one continuous variable in the independent variables, we didn't do the correlation analysis.
+str(new)
+```
+
+
 # Data modeling
 ```{r}
-mod <- lm(log(Earnings) ~ EducLevel + Gender + Citizenship + Race + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
-summary(mod)
+mod1 <- lm(Earnings ~ EducLevel + Gender + Citizenship + Race + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
+
+names(mod1$coefficients) <- c("Intercept","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "Female", "NonUSCitizen", "Black", "IndianOrAlaska", "Asian", "OtherRace", "MultipleRaces", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
+
+# model summary
+summary(mod1)
+# BPG
+bptest(mod1)
+```
+
+```{r}
+# Try to use log
+mod2 <- lm(log(Earnings) ~ EducLevel + Gender + Citizenship + Race + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
+
+names(mod2$coefficients) <- c("Intercept","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "Female", "NonUSCitizen", "Black", "IndianOrAlaska", "Asian", "OtherRace", "MultipleRaces", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
+
+summary(mod2)
+bptest(mod2)
 ```
 
 #Sample Selection Criteria
