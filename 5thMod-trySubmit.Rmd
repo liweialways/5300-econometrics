@@ -266,6 +266,7 @@ bptest(mod2)
 
 ```{r}
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Robust standard errors
 install.packages("sandwich")
 library(sandwich)
@@ -278,6 +279,8 @@ sandwich_se <- diag(vcovHC(mod1, type = "HC"))^0.5
 sandwich_se
 
 =======
+=======
+>>>>>>> 2443ca3b89a3bb0991744fdf7d609ef65a18f29a
 #Generate the Variance Covariance Matrix of the Parameter Estimates
 vcovHC(mod2, type = "HC") #the diagonal elements are the variances of the parameter estimates
 
@@ -291,6 +294,9 @@ mod3 <- lm(log(Earnings) ~ EducLevel + Gender + Citizenship + Race + Marrige_Sta
 
 summary(mod3)
 bptest(mod3)
+<<<<<<< HEAD
+>>>>>>> 2443ca3b89a3bb0991744fdf7d609ef65a18f29a
+=======
 >>>>>>> 2443ca3b89a3bb0991744fdf7d609ef65a18f29a
 ```
 
