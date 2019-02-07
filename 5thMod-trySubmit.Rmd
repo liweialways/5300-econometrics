@@ -47,6 +47,7 @@ if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sess
 library(tidyverse)
 library(ggplot2)
 library(lmtest) # for BPG test
+library(sandwich) # for robust standard error
 ```
 
 
@@ -262,6 +263,37 @@ names(mod2$coefficients) <- c("Intercept","CollegeDgr", "ProfessionalDgr", "Mast
 summary(mod2)
 bptest(mod2)
 ```
+
+```{r}
+<<<<<<< HEAD
+# Robust standard errors
+install.packages("sandwich")
+library(sandwich)
+
+#Generate the Variance Covariance Matrix of the Parameter Estimates
+vcovHC(mod1, type = "HC") #the diagonal elements are the variances of the parameter estimates
+
+#Generate the Robust standard errors and print them on screen 
+sandwich_se <- diag(vcovHC(mod1, type = "HC"))^0.5
+sandwich_se
+
+=======
+#Generate the Variance Covariance Matrix of the Parameter Estimates
+vcovHC(mod2, type = "HC") #the diagonal elements are the variances of the parameter estimates
+
+#Generate the Robust standard errors and print them on screen 
+sandwich_se <- diag(vcovHC(mod2, type = "HC"))^0.5
+sandwich_se
+```
+
+```{r}
+mod3 <- lm(log(Earnings) ~ EducLevel + Gender + Citizenship + Race + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = new)
+
+summary(mod3)
+bptest(mod3)
+>>>>>>> 2443ca3b89a3bb0991744fdf7d609ef65a18f29a
+```
+
 
 #Sample Selection Criteria
 
