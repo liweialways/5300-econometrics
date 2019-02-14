@@ -1,5 +1,5 @@
 ---
-title: "Binarize Model"
+title: "Laber Market Analysis"
 author: "Wei Li, Florence Yan, Ziyu Jin"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
@@ -43,7 +43,7 @@ rm(list = ls(all = TRUE))
 if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sessionInfo()$otherPkgs), sep=""), detach, character.only = TRUE, unload = TRUE)
 ```
 
-```{r message = FALSE, echo = FALSE}
+```{r message = FALSE, echo = FALSE, error = FALSE}
 library(tidyverse)
 library(ggplot2)
 install.packages("lmtest")
@@ -83,7 +83,7 @@ new <- na.exclude(research_data)
 # exclude those who cannot work due to age under 16 years old or not in labor force.
 new <- new[new['ESR'] != 6, ]
 ## total person's earnings more than or equal to $1
-new <- new[new['PERNP'] >= 0000001, ]
+new <- new[new['PERNP'] >= 1, ]
 ## full time workers
 new <- new[new['WKHP'] >= 40, ]
 ## exclude people who has self-care difficult
@@ -236,7 +236,7 @@ new$Marrige_Status <- as.factor(new$Marrige_Status)
 new$Employment_Status <- as.factor(new$Employment_Status)
 new$Work_Type <- as.factor(new$Work_Type)
 new$RaceAndEthnic <- as.factor(new$RaceAndEthnic)
-
+summary(new)
 ```
 
 ```{r}
@@ -248,7 +248,6 @@ str(new)
 
 # Data modeling
 ```{r}
-summary(new)
 mod1 <- lm(Earnings ~ EducLevel + Gender + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
 
 names(mod1$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "Female", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
