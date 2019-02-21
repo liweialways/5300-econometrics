@@ -1,0 +1,395 @@
+---
+title: "Laber Market Analysis"
+author: "Wei Li, Florence Yan, Ziyu Jin"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+  html_notebook:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r echo = FALSE}
+# Course: BUAN 5210
+# Title: LMA Assignment
+# Research questions: 
+## 1. In the state of Washington, how do women's earnings vary by educational attainment?
+## 2. Does the premium for higher educated women vary by race?
+# Area of interest: Washington state
+# Date: January 29, 2019
+# Author: Wei Li, Florence Yan, Ziyu Jin
+```
+
+# About this research
+
+## Research question
+
++ In the state of Washington, how do women's earnings vary by educational attainment?
+
++ Does the premium for higher educated women vary by race?
+
+## Research area
+
++ Washington state
+
+```{r echo = FALSE }
+# Clear environment of variables and functions
+rm(list = ls(all = TRUE)) 
+# Clear environmet of packages
+if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sessionInfo()$otherPkgs), sep=""), detach, character.only = TRUE, unload = TRUE)
+```
+
+```{r message = FALSE, echo = FALSE, error = FALSE}
+library(tidyverse)
+library(ggplot2)
+install.packages("lmtest")
+library(lmtest) # for BPG test
+install.packages("sandwich")
+library(sandwich) # for robust standard error
+```
+
+
+# Data preparation
+```{r}
+### Load data
+wa_data <- read.csv('ss16pwa.csv')
+### Subset and focus on the data of interest
+# SERIALNO: Housing unit/GQ person serial number  
+# SPORDER: Person number
+# SEX: Sex                                        
+# CIT: Citizenip status
+# PERNP: Total person's earnings                  
+# SCHL: Educational attainment
+# RAC1P: Recoded detailed race code               
+# ESR: Employment status
+# WKHP: Usual hours worked per week past 12 months
+# MAR: marrige status
+# AGEP: age
+# COW: class of worker
+# DDRS: self-care difficulty
+# DIS: disability
+research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR','WKHP', 'MAR', 'AGEP', 'COW', 'DDRS', 'DIS')]
+summary(research_data)
+```
+
+# Data cleaning
+```{r}
+# exclude all missing values
+new <- na.exclude(research_data) 
+# exclude those who cannot work due to age under 16 years old or not in labor force.
+new <- new[new['ESR'] != 6, ]
+## total person's earnings more than or equal to $1
+new <- new[new['PERNP'] >= 1, ]
+## full time workers
+new <- new[new['WKHP'] >= 40, ]
+## exclude people who has self-care difficult
+new <- new[new['DDRS'] == 2, ]
+## exclude people who has disability
+new <- new[new['DIS'] == 2, ]
+# exclude those who has a job but didn't work, or unemployed
+new <- new[new['ESR'] != 2 & new['ESR'] != 5 & new['ESR'] != 3, ]
+# exclude male
+new <- new[new['SEX'] == 2, ]
+# exclude the column work hours, self-care difficulty and disability, gender
+new <- new[c('SERIALNO','SPORDER', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR', 'MAR', 'AGEP', 'COW')]
+
+summary(new)
+```
+
+```{r}
+## group educational attainment levels into 5 levels: 
+# A: with degrees lower than high school;
+# B: with high school degree; 
+# C: with colleage degree; 
+# D: with professional degree;
+# E: with master degree; 
+# F: with Doctor degree
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'SCHL'] < 16) {
+    new[rows, 'EducLevel'] = 'A'
+  }
+  if (new[rows, 'SCHL'] >= 16 & new[rows, 'SCHL'] <= 19) {
+    new[rows, 'EducLevel'] = 'B'
+  }
+  if (new[rows, 'SCHL'] >= 20 & new[rows, 'SCHL'] <= 21) {
+    new[rows, 'EducLevel'] = 'C'
+  }
+  if (new[rows, 'SCHL'] == 23) {
+    new[rows, 'EducLevel'] = 'D'    
+  }
+  if (new[rows, 'SCHL'] == 22) {
+    new[rows, 'EducLevel'] = 'E'
+  }
+  if (new[rows, 'SCHL'] == 24) {
+    new[rows, 'EducLevel'] = 'F'
+  }
+}
+```
+
+```{r}
+# More fucoused on the 6 races:
+## 1. Non-Hispanic White
+## 2. Non-Hispanic Black
+## 3. Non-Hispanic Asian
+## 4. Hispanic
+
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'RAC1P'] == 1 & new[rows, 'HISP'] == 1) {
+    new[rows, 'RaceAndEthnic'] = 1 # Non-Hispanic White
+  }
+  if (new[rows, 'RAC1P'] == 2 & new[rows, 'HISP'] == 1) {
+    new[rows, 'RaceAndEthnic'] = 2 # Non-Hispanic Black
+  }
+  if (new[rows, 'RAC1P'] == 6 & new[rows, 'HISP'] == 1) {
+    new[rows, 'RaceAndEthnic'] =  3 # Non-Hispanic Asian
+  }
+  if (new[rows, 'HISP'] >1 & new[rows, 'HISP'] <= 24) {
+    new[rows, 'RaceAndEthnic'] =  4 # Hispanic
+  }
+}
+
+new <- na.exclude(new) 
+
+```
+
+```{r}
+# Redefine variable citizenship
+# 1: US Citizen
+# 2: Not US Citizen
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'CIT'] != 5) {
+    new[rows, 'CIT'] = 1
+  }
+  if (new[rows, 'CIT'] == 5) {
+    new[rows, 'CIT'] = 2
+  }
+}
+
+```
+
+```{r}
+# Redefine marrige status:
+# 1: In marrige now
+# 2: Not in marrige now
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'MAR'] == 1 ) {
+    new[rows, 'MAR'] = 1
+  }
+  if (new[rows, 'MAR'] != 1) {
+    new[rows, 'MAR'] = 2
+  }
+}
+
+```
+
+```{r}
+# exclude unemployed and last worked 5 years ago or earlier
+new <- new[new$COW != 9, ]
+# Redefine class or worker:
+# A: work for private business or organizations
+# B: work for government
+# C: work for own/family business
+for (rows in 1:nrow(new)) {
+  if (new[rows, 'COW'] == 1 ) {
+    new[rows, 'COW'] = "A"
+  }
+  if (new[rows, 'COW'] == 2) {
+    new[rows, 'COW'] = "A"
+  }  
+  if (new[rows, 'COW'] == 3) {
+    new[rows, 'COW'] = "B"
+  }
+  if (new[rows, 'COW'] == 4) {
+    new[rows, 'COW'] = "B"
+    }
+  if (new[rows, 'COW'] == 5) {
+    new[rows, 'COW'] = "B"
+  }
+  if (new[rows, 'COW'] == 6) {
+    new[rows, 'COW'] = "C"
+  }
+  if (new[rows, 'COW'] == 7) {
+    new[rows, 'COW'] = "C"
+  }
+  if (new[rows, 'COW'] == 8) {
+    new[rows, 'COW'] = "C"
+  }
+}
+
+
+```
+
+
+```{r}
+# Columns name change
+colnames(new)
+new <- new[c("SERIALNO", "SPORDER", "CIT", "PERNP", "ESR", "MAR", "AGEP", "COW" , "EducLevel", "RaceAndEthnic")]
+
+colnames(new) <- c("Housing_Unit", "Person_Number", "Citizenship", "Earnings", "Employment_Status", "Marrige_Status", "Age", "Work_Type", "EducLevel", "RaceAndEthnic")
+
+# Change the data type
+new$Citizenship <- as.factor(new$Citizenship)
+new$EducLevel <- as.factor(new$EducLevel)
+new$Marrige_Status <- as.factor(new$Marrige_Status)
+new$Employment_Status <- as.factor(new$Employment_Status)
+new$Work_Type <- as.factor(new$Work_Type)
+new$RaceAndEthnic <- as.factor(new$RaceAndEthnic)
+summary(new)
+```
+
+```{r}
+# Correlation
+# There is only one continuous variable in the independent variables, we didn't do the correlation analysis.
+str(new)
+```
+
+
+# Data modeling
+```{r}
+# Model 1
+mod1 <- lm(Earnings ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
+
+names(mod1$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
+## 1. Non-Hispanic White
+## 2. Non-Hispanic Black
+## 3. Non-Hispanic Asian
+## 4. Hispanic
+# model summary
+summary(mod1)
+# BPG
+bptest(mod1)
+```
+
+```{r}
+# Model 2: use log(earnings)
+mod2 <- lm(log(Earnings) ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
+
+names(mod2$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
+
+summary(mod2)
+
+bptest(mod2)
+```
+
+```{r}
+# Model 3: Use log(earnings) and square Age
+mod3 <- lm(log(Earnings) ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = new)
+
+names(mod3$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
+
+# BPG test
+bptest(mod3)
+
+# Replace SEs in Mod3 with robust SE
+s <- summary(mod3)
+s$coefficients[ , 2] <- sqrt(diag(vcovHC(mod3)))
+s
+
+```
+
+
+#Sample Selection Criteria
+
++ We use individual-level data in Washington State from the 2016 American Community Survey (ACS) to examine earning gaps between individuals with different educational attainments. The American Community Survey (ACS) is a national survey that uses continuous measurement methods. In this survey, a series of monthly samples produce annual estimates for the same small areas (census tracts and block groups) formerly surveyed via the decennial census long-form sample. In our study, we define workers as individuals who are over 16 years old and full-time workers who work more than or equal to 40 hours per week. Our sample consists of 24,710 individuals in total. Specifically, there are 12,050 people with or without high school diploma, 8,830 people with college degree, 620 people with professional degree, 2,775 people with master’s degree, and 435 people with doctor degree. Regarding total personal earning, we define it as individuals who earns over $1 during the past year. At last, we excluded the observations who has self-care difficulty or disabilities, in case these might bring disadvantage in earnings.
+
+
+
+# Descriptive statistics and exploratory data analysis
+```{r echo=FALSE}
+str(new)
+```
+
++ In this study, the dependent variable is a set of quantititve values named Total_Person_Earning. It is the record for th total person's earnings.
+
++ The independent variable we are interested are education level(EducLevel), Race, Sex, Citizenship. Values in these columns are categorical.
+
++ Sex is the gender record.
+
++ Citizenship is to mark the person is or isn't US citizen.
+
++ Race is the race record. 9 races in total.
+
++ EducLevel is the education level of each person. There are 5 levels:  A: with degrees no higher than high school; B: with colleage degree; C: with professional degree; D: with master degree; E: with Doctor degree.
+
+```{r}
+summary(new)
+```
+
++ There are more males than females in our research.
+
++ The US citizens takes most part of the data. So it might be difficult to see whether citizenship has the premium of high earnings.
+
++ The ratio of the races is also unbalance in which White is the majority.
+
++ For Education level, there are large number of people who don't have a college degree. Also large number of people whose highest degree is College degree.
+
++ In our data set, the mean of the total person's earning is about $54859; median is $40000; minimum is $-5100; maximum is $850000  
+
++ To explain those negative earnings, since we have excluded children and people who are not in labor force, one assumption can be that they are in debt.
+
+
+```{r echo=FALSE}
+boxplot(new$Earnings, main = "Boxplot of earnings") 
+```
+
++ From the boxplot we can see, there are extreme values on both ends. But the extreme large earnings seem to be more, so the distribution of the earnings should be positively skewed. Fo the skewed data, we would better use median to represent the majority's earning level.
+
+```{r echo=FALSE}
+EducLevel_pic <- ggplot(new, aes(x = EducLevel)) + geom_histogram(stat = "count") + labs(title = "Educational Level in WA")
+EducLevel_pic
+```
+
++ Since it is a qualitive variable, we draw a histogram graph to explain the data set.
+
++ From the graph, we can tell that the least number of people got doctor degree; most of the people attained high school degrees or college degrees.
+
+```{r echo=FALSE}
+# median earnings of each educlevel
+Educ_wage_pic <- new %>% 
+  group_by(EducLevel) %>% 
+  summarise(med_earning = median(Earnings)) %>% 
+  ggplot(aes(x = EducLevel, y = med_earning)) +
+  geom_histogram(stat = "identity")
+Educ_wage_pic
+
+```
+
+
++ The histogram graph shows the relationship between educational level and wages of our sample data. From the graph, we can tell that people whose education degree is no higher than high school earn least in the group; people with professional degree earn most money compared to other groups.
+
+```{r echo=FALSE}
+# 1 .White alone
+# 2 .Black or African American alone
+# 3 .American Indian alone
+# 4 .Alaska Native alone
+# 5 .American Indian and Alaska Native tribes specified; or American Indian or Alaska Native, not specified and no other races 
+# 6 .Asian alone
+# 7 .Native Hawaiian and Other Pacific Islander alone
+# 8 .Some Other Race alone
+# 9 .Two or More Races
+race_wa <- ggplot(new, aes(x = Race)) + geom_histogram(stat = "count") + labs(title = "Race in WA")
+race_wa
+```
+
+
++ From the graph, we can see that the majority of people in WA are white; the second largest group is Asian (alone) group; there are few Alaska Native or American Indian in WA.
+
+```{r echo=FALSE}
+wage_educ_race_pic <- new %>% 
+  group_by(Race, EducLevel) %>% 
+  summarise(med_earn = median(Earnings)) %>% 
+  ggplot(aes(x = EducLevel, y = med_earn, fill = Race)) +
+  geom_bar(position = 'dodge', stat = 'identity')
+wage_educ_race_pic
+
+```
+
++ The graph shows the relationship between wages, educational level, and races. 
+
++ We still can find that people with professional degrees earns the most.
+
++ Different races have different advantages in earning among the 5 education levels.
