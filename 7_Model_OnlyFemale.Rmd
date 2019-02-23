@@ -45,10 +45,9 @@ if(is.null(sessionInfo()$otherPkgs) == FALSE)lapply(paste("package:", names(sess
 
 ```{r message = FALSE, echo = FALSE, error = FALSE}
 library(tidyverse)
-library(ggplot2)
-install.packages("lmtest")
+#install.packages("lmtest")
 library(lmtest) # for BPG test
-install.packages("sandwich")
+#install.packages("sandwich")
 library(sandwich) # for robust standard error
 ```
 
@@ -131,7 +130,7 @@ for (rows in 1:nrow(new)) {
 ```
 
 ```{r}
-# More fucoused on the 6 races:
+# More fucoused on the 4 races:
 ## 1. Non-Hispanic White
 ## 2. Non-Hispanic Black
 ## 3. Non-Hispanic Asian
@@ -276,7 +275,7 @@ bptest(mod2)
 ```
 
 ```{r}
-# Model 3: Use log(earnings) and square Age
+# Model for 1st question: Use log(earnings) and square Age
 mod3 <- lm(log(Earnings) ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = new)
 
 names(mod3$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
@@ -284,10 +283,100 @@ names(mod3$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "Professio
 # BPG test
 bptest(mod3)
 
-# Replace SEs in Mod3 with robust SE
-s <- summary(mod3)
-s$coefficients[ , 2] <- sqrt(diag(vcovHC(mod3)))
-s
+```
+
+```{r}
+# recalculate the t-stat and p-value based on robust SE
+recal <- function(dat, mod) {
+  mod_sum <-summary(mod)
+  # substitute SE
+  mod_sum$coefficients[ , 2] <- sqrt(diag(vcovHC(mod)))
+  # recalculate t-stat(beta/SE)
+  mod_sum$coefficients[ , 3] <- mod_sum$coefficients[ , 1]/mod_sum$coefficients[ , 2]
+  # recalculate p value according to t-stat
+  mod_sum$coefficients[ , 4] <- pt(mod_sum$coefficients[ , 3], nrow(dat) - 1, lower = FALSE)
+  return(mod_sum)
+}
+
+q1_sum <- recal(new, mod3)
+q1_sum
+```
+
+
+```{r}
+## Model for 2nd question: divide into groups according to race and ethnicity
+
+# White
+white <- new %>% filter(RaceAndEthnic == 1)
+
+q2_w <- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = white )
+
+names(q2_w$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
+
+
+# BPG test
+bptest(q2_w)
+
+# recaculate values
+q2_w_sum <- recal(white, q2_w)
+q2_w_sum
+
+```
+
+
+```{r}
+# Black
+black <- new %>% filter(RaceAndEthnic == 2)
+
+# No EducLevel F in black
+# summary(black)
+
+q2_b <- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = black )
+
+# No DoctorDgr in black
+names(q2_b$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
+
+# BPG test
+bptest(q2_b)
+
+# recaculate values
+q2_b_sum <- recal(black, q2_b)
+q2_b_sum
+
+```
+
+
+```{r}
+# Asian
+asian <- new %>% filter(RaceAndEthnic == 3)
+
+q2_a<- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = asian )
+
+names(q2_a$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
+
+# BPG test
+bptest(q2_a)
+
+# recaculate values
+q2_a_sum <- recal(white, q2_a)
+q2_a_sum
+
+```
+
+```{r}
+# Asian
+hisp <- new %>% filter(RaceAndEthnic == 4)
+
+q2_h<- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = hisp )
+
+names(q2_h$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
+
+# BPG test
+bptest(q2_h)
+
+# recaculate values
+q2_h_sum <- recal(white, q2_h)
+q2_h_sum
 
 ```
 
@@ -371,7 +460,7 @@ Educ_wage_pic
 # 7 .Native Hawaiian and Other Pacific Islander alone
 # 8 .Some Other Race alone
 # 9 .Two or More Races
-race_wa <- ggplot(new, aes(x = Race)) + geom_histogram(stat = "count") + labs(title = "Race in WA")
+race_wa <- ggplot(new, aes(x = RaceAndEthnic)) + geom_histogram(stat = "count") + labs(title = "Race in WA")
 race_wa
 ```
 
@@ -380,9 +469,9 @@ race_wa
 
 ```{r echo=FALSE}
 wage_educ_race_pic <- new %>% 
-  group_by(Race, EducLevel) %>% 
+  group_by(RaceAndEthnic, EducLevel) %>% 
   summarise(med_earn = median(Earnings)) %>% 
-  ggplot(aes(x = EducLevel, y = med_earn, fill = Race)) +
+  ggplot(aes(x = EducLevel, y = med_earn, fill = RaceAndEthnic)) +
   geom_bar(position = 'dodge', stat = 'identity')
 wage_educ_race_pic
 
