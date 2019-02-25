@@ -73,6 +73,7 @@ wa_data <- read.csv('ss16pwa.csv')
 # DIS: disability
 research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR','WKHP', 'MAR', 'AGEP', 'COW', 'DDRS', 'DIS')]
 summary(research_data)
+str(research_data)
 ```
 
 # Data cleaning
@@ -93,7 +94,7 @@ new <- new[new['DIS'] == 2, ]
 new <- new[new['ESR'] != 2 & new['ESR'] != 5 & new['ESR'] != 3, ]
 # exclude male
 new <- new[new['SEX'] == 2, ]
-# exclude the column work hours, self-care difficulty and disability, gender
+# exclude the columns work hours, self-care difficulty and disability, gender
 new <- new[c('SERIALNO','SPORDER', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR', 'MAR', 'AGEP', 'COW')]
 
 summary(new)
@@ -103,7 +104,7 @@ summary(new)
 ## group educational attainment levels into 5 levels: 
 # A: with degrees lower than high school;
 # B: with high school degree; 
-# C: with colleage degree; 
+# C: with college degree; 
 # D: with professional degree;
 # E: with master degree; 
 # F: with Doctor degree
@@ -279,7 +280,7 @@ bptest(mod2)
 mod3 <- lm(log(Earnings) ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = new)
 
 names(mod3$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
-
+summary(mod3)
 # BPG test
 bptest(mod3)
 
@@ -364,7 +365,7 @@ q2_a_sum
 ```
 
 ```{r}
-# Asian
+# Hispanic
 hisp <- new %>% filter(RaceAndEthnic == 4)
 
 q2_h<- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = hisp )
