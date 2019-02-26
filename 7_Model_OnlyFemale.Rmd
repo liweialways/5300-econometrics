@@ -49,6 +49,9 @@ library(tidyverse)
 library(lmtest) # for BPG test
 #install.packages("sandwich")
 library(sandwich) # for robust standard error
+library(tidyverse)
+library(janitor)
+library(gridExtra)
 ```
 
 
@@ -73,7 +76,6 @@ wa_data <- read.csv('ss16pwa.csv')
 # DIS: disability
 research_data <- wa_data[c('SERIALNO','SPORDER','SEX', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR','WKHP', 'MAR', 'AGEP', 'COW', 'DDRS', 'DIS')]
 summary(research_data)
-str(research_data)
 ```
 
 # Data cleaning
@@ -94,9 +96,8 @@ new <- new[new['DIS'] == 2, ]
 new <- new[new['ESR'] != 2 & new['ESR'] != 5 & new['ESR'] != 3, ]
 # exclude male
 new <- new[new['SEX'] == 2, ]
-# exclude the columns work hours, self-care difficulty and disability, gender
+# exclude the column work hours, self-care difficulty and disability, gender
 new <- new[c('SERIALNO','SPORDER', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR', 'MAR', 'AGEP', 'COW')]
-
 summary(new)
 ```
 
@@ -104,7 +105,7 @@ summary(new)
 ## group educational attainment levels into 5 levels: 
 # A: with degrees lower than high school;
 # B: with high school degree; 
-# C: with college degree; 
+# C: with colleage degree; 
 # D: with professional degree;
 # E: with master degree; 
 # F: with Doctor degree
@@ -136,7 +137,6 @@ for (rows in 1:nrow(new)) {
 ## 2. Non-Hispanic Black
 ## 3. Non-Hispanic Asian
 ## 4. Hispanic
-
 for (rows in 1:nrow(new)) {
   if (new[rows, 'RAC1P'] == 1 & new[rows, 'HISP'] == 1) {
     new[rows, 'RaceAndEthnic'] = 1 # Non-Hispanic White
@@ -151,9 +151,7 @@ for (rows in 1:nrow(new)) {
     new[rows, 'RaceAndEthnic'] =  4 # Hispanic
   }
 }
-
 new <- na.exclude(new) 
-
 ```
 
 ```{r}
@@ -168,7 +166,6 @@ for (rows in 1:nrow(new)) {
     new[rows, 'CIT'] = 2
   }
 }
-
 ```
 
 ```{r}
@@ -183,7 +180,6 @@ for (rows in 1:nrow(new)) {
     new[rows, 'MAR'] = 2
   }
 }
-
 ```
 
 ```{r}
@@ -219,8 +215,6 @@ for (rows in 1:nrow(new)) {
     new[rows, 'COW'] = "C"
   }
 }
-
-
 ```
 
 
@@ -228,9 +222,7 @@ for (rows in 1:nrow(new)) {
 # Columns name change
 colnames(new)
 new <- new[c("SERIALNO", "SPORDER", "CIT", "PERNP", "ESR", "MAR", "AGEP", "COW" , "EducLevel", "RaceAndEthnic")]
-
 colnames(new) <- c("Housing_Unit", "Person_Number", "Citizenship", "Earnings", "Employment_Status", "Marrige_Status", "Age", "Work_Type", "EducLevel", "RaceAndEthnic")
-
 # Change the data type
 new$Citizenship <- as.factor(new$Citizenship)
 new$EducLevel <- as.factor(new$EducLevel)
@@ -245,6 +237,20 @@ summary(new)
 # Correlation
 # There is only one continuous variable in the independent variables, we didn't do the correlation analysis.
 str(new)
+
+# Observe the data again
+a <- new %>% 
+  tabyl(EducLevel, RaceAndEthnic) %>% 
+  adorn_totals(where = c("row", "col")) %>% 
+  adorn_percentages(denominator = "all") %>% 
+  adorn_pct_formatting(digits = 1) %>% 
+  as.data.frame()
+a$EducLevel <- c("Under High School", "High School", "College", "Professional", "Master", "Doctor", "Total")
+colnames(a) <- c("EducLevel", "White", "Black", "Asian", "Hispanic", "Total")
+png("observedata.png")
+p<-tableGrob(a)
+grid.arrange(p)
+dev.off()
 ```
 
 
@@ -252,7 +258,6 @@ str(new)
 ```{r}
 # Model 1
 mod1 <- lm(Earnings ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
-
 names(mod1$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
 ## 1. Non-Hispanic White
 ## 2. Non-Hispanic Black
@@ -267,23 +272,17 @@ bptest(mod1)
 ```{r}
 # Model 2: use log(earnings)
 mod2 <- lm(log(Earnings) ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + Work_Type, data = new)
-
 names(mod2$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age", "WorkForGovernment", "WorkForOwn")
-
 summary(mod2)
-
 bptest(mod2)
 ```
 
 ```{r}
 # Model for 1st question: Use log(earnings) and square Age
 mod3 <- lm(log(Earnings) ~ EducLevel + Citizenship + RaceAndEthnic + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = new)
-
 names(mod3$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "Black", "Asian", "Hispanic", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
-summary(mod3)
 # BPG test
 bptest(mod3)
-
 ```
 
 ```{r}
@@ -298,7 +297,6 @@ recal <- function(dat, mod) {
   mod_sum$coefficients[ , 4] <- pt(mod_sum$coefficients[ , 3], nrow(dat) - 1, lower = FALSE)
   return(mod_sum)
 }
-
 q1_sum <- recal(new, mod3)
 q1_sum
 ```
@@ -306,79 +304,56 @@ q1_sum
 
 ```{r}
 ## Model for 2nd question: divide into groups according to race and ethnicity
-
 # White
 white <- new %>% filter(RaceAndEthnic == 1)
-
 q2_w <- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = white )
-
 names(q2_w$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
-
-
 # BPG test
 bptest(q2_w)
-
 # recaculate values
 q2_w_sum <- recal(white, q2_w)
 q2_w_sum
-
 ```
 
 
 ```{r}
 # Black
 black <- new %>% filter(RaceAndEthnic == 2)
-
 # No EducLevel F in black
 # summary(black)
-
 q2_b <- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = black )
-
 # No DoctorDgr in black
 names(q2_b$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
-
 # BPG test
 bptest(q2_b)
-
 # recaculate values
 q2_b_sum <- recal(black, q2_b)
 q2_b_sum
-
 ```
 
 
 ```{r}
 # Asian
 asian <- new %>% filter(RaceAndEthnic == 3)
-
 q2_a<- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = asian )
-
 names(q2_a$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
-
 # BPG test
 bptest(q2_a)
-
 # recaculate values
 q2_a_sum <- recal(white, q2_a)
 q2_a_sum
-
 ```
 
 ```{r}
 # Hispanic
 hisp <- new %>% filter(RaceAndEthnic == 4)
-
 q2_h<- lm(log(Earnings) ~ EducLevel + Citizenship + Marrige_Status + Employment_Status + Age + I(Age*Age) + Work_Type, data = hisp )
-
 names(q2_h$coefficients) <- c("Intercept","HighschlDgr","CollegeDgr", "ProfessionalDgr", "MasterDgr", "DocterDgr", "NonUSCitizen", "NotMarried",  "ArmedForcesWork", "Age","I(Age * Age)", "WorkForGovernment", "WorkForOwn")
-
 # BPG test
 bptest(q2_h)
-
 # recaculate values
 q2_h_sum <- recal(white, q2_h)
 q2_h_sum
-
 ```
 
 
@@ -429,7 +404,10 @@ boxplot(new$Earnings, main = "Boxplot of earnings")
 + From the boxplot we can see, there are extreme values on both ends. But the extreme large earnings seem to be more, so the distribution of the earnings should be positively skewed. Fo the skewed data, we would better use median to represent the majority's earning level.
 
 ```{r echo=FALSE}
-EducLevel_pic <- ggplot(new, aes(x = EducLevel)) + geom_histogram(stat = "count") + labs(title = "Educational Level in WA")
+EducLevel_pic <- ggplot(new, aes(x = EducLevel)) + geom_histogram(stat = "count") + 
+  scale_x_discrete(breaks = c("A", "B", "C", "D", "E", "F"),
+                   labels= c("LowerthanHighschool", "Highschool", "College", "Professional", "Master", "Doctor")) +
+  labs(title = "Educational Level in WA")
 EducLevel_pic
 ```
 
@@ -443,13 +421,17 @@ Educ_wage_pic <- new %>%
   group_by(EducLevel) %>% 
   summarise(med_earning = median(Earnings)) %>% 
   ggplot(aes(x = EducLevel, y = med_earning)) +
-  geom_histogram(stat = "identity")
+  ylab("Med_earning") + 
+  xlab("EducLevel") +
+  scale_x_discrete(breaks = c("A", "B", "C", "D", "E", "F"),
+                   labels= c("LowerthanHighschool", "Highschool", "College", "Professional", "Master", "Doctor")) +
+  geom_histogram(stat = "identity") +
+  labs(title = "Earning and Educational Level in WA")
 Educ_wage_pic
-
 ```
 
 
-+ The histogram graph shows the relationship between educational level and wages of our sample data. From the graph, we can tell that people whose education degree is no higher than high school earn least in the group; people with professional degree earn most money compared to other groups.
++ The histogram graph shows the relationship between educational level and earning of our sample data. From the graph, we can tell that people whose education degree is no higher than high school earn least in the group; people with professional degree earn most money compared to other groups.
 
 ```{r echo=FALSE}
 # 1 .White alone
@@ -461,7 +443,10 @@ Educ_wage_pic
 # 7 .Native Hawaiian and Other Pacific Islander alone
 # 8 .Some Other Race alone
 # 9 .Two or More Races
-race_wa <- ggplot(new, aes(x = RaceAndEthnic)) + geom_histogram(stat = "count") + labs(title = "Race in WA")
+race_wa <- ggplot(new, aes(x = RaceAndEthnic)) + geom_histogram(stat = "count") + 
+  scale_x_discrete(breaks = c("1", "2", "3", "4"),
+                   labels= c("White", "Black", "Asian", "Hispanic")) +
+  labs(title = "Race in WA")
 race_wa
 ```
 
@@ -473,13 +458,22 @@ wage_educ_race_pic <- new %>%
   group_by(RaceAndEthnic, EducLevel) %>% 
   summarise(med_earn = median(Earnings)) %>% 
   ggplot(aes(x = EducLevel, y = med_earn, fill = RaceAndEthnic)) +
-  geom_bar(position = 'dodge', stat = 'identity')
-wage_educ_race_pic
+  scale_x_discrete(breaks = c("A", "B", "C", "D", "E", "F"),
+                   labels= c("LowerthanHighschool", "Highschool", "College", "Professional", "Master", "Doctor")) +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  ylab("Median of Earning") + 
+  xlab("Educational Level") +
+  scale_fill_discrete(name="Race and Ethnic",
+                         breaks=c("1", "2", "3", "4"),
+                         labels=c("White", "Black", "Asian", "Hispanic")) + 
+  ggtitle("Earning and Educational Attainment for Different Races") +
+  coord_flip()
 
+wage_educ_race_pic
 ```
 
-+ The graph shows the relationship between wages, educational level, and races. 
++ The graph shows the relationship between earning, educational level, and races. 
 
-+ We still can find that people with professional degrees earns the most.
++ We still can find that people with professional degrees earns the most in general.
 
 + Different races have different advantages in earning among the 5 education levels.
