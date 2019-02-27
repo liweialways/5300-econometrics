@@ -52,6 +52,7 @@ library(sandwich) # for robust standard error
 library(tidyverse)
 library(janitor)
 library(gridExtra)
+library(stargazer)
 ```
 
 
@@ -232,25 +233,76 @@ new$Work_Type <- as.factor(new$Work_Type)
 new$RaceAndEthnic <- as.factor(new$RaceAndEthnic)
 summary(new)
 ```
+```{r}
+# observe data again:
+## see the distribution of earnings vary by educational attainment
+edu_earnings <- new[, c("Earnings", "EducLevel")]
+for (rows in 1:nrow(edu_earnings)) {
+  if (edu_earnings[rows, 'EducLevel'] == "A") {
+    edu_earnings[rows, 'EducLevel1'] = 'Under High School'
+  }
+  if (edu_earnings[rows, 'EducLevel'] == "B") {
+    edu_earnings[rows, 'EducLevel1'] = 'High School'
+  }
+  if (edu_earnings[rows, 'EducLevel'] == "C") {
+    edu_earnings[rows, 'EducLevel1'] = 'College'
+  }
+  if (edu_earnings[rows, 'EducLevel'] == "D") {
+    edu_earnings[rows, 'EducLevel1'] = 'Professional'    
+  }
+  if (edu_earnings[rows, 'EducLevel'] == "E") {
+    edu_earnings[rows, 'EducLevel1'] = 'Master'
+  }
+  if (edu_earnings[rows, 'EducLevel'] == "F") {
+    edu_earnings[rows, 'EducLevel1'] = 'Doctor'
+  }
+}
+
+edu_earnings %>% 
+  select(-EducLevel) %>% 
+  group_by(EducLevel1) %>% 
+  mutate(id = 1:n()) %>% 
+  as.data.frame() %>% 
+  spread(EducLevel1, Earnings) %>% 
+  select(-id) %>% 
+  stargazer(digits = 2, header = F, 
+            title = "Table 1: Descriptive Statistics for Educational Attainment", 
+            type = "text", out = "Table_EducDescprtiveStats.html")
+
+## see the earnings distribution by races:
+race_earnings <- new[, c("Earnings", "RaceAndEthnic")]
+for (rows in 1:nrow(race_earnings)) {
+  if (race_earnings[rows, 'RaceAndEthnic'] == 1 ) {
+    race_earnings[rows, 'RaceAndEthnic1'] = 'White'
+  }
+  if (race_earnings[rows, 'RaceAndEthnic'] == 2 ) {
+    race_earnings[rows, 'RaceAndEthnic1'] = 'Black'
+  }
+  if (race_earnings[rows, 'RaceAndEthnic'] == 3) {
+    race_earnings[rows, 'RaceAndEthnic1'] = 'Asian'
+  }
+  if (race_earnings[rows, 'RaceAndEthnic'] == 4) {
+    race_earnings[rows, 'RaceAndEthnic1'] = 'Hispanic'    
+  }
+}
+
+race_earnings %>% 
+  select(-RaceAndEthnic) %>% 
+  group_by(RaceAndEthnic1) %>% 
+  mutate(id = 1:n()) %>% 
+  as.data.frame() %>% 
+  spread(RaceAndEthnic1, Earnings) %>% 
+  select(-id) %>% 
+  stargazer(digits = 2, header = F, 
+            title = "Table 2: Descriptive Statistics for 4 Races", 
+            type = "text", out = "Table_RaceDescprtiveStats.html")
+
+```
 
 ```{r}
 # Correlation
 # There is only one continuous variable in the independent variables, we didn't do the correlation analysis.
 str(new)
-
-# Observe the data again
-a <- new %>% 
-  tabyl(EducLevel, RaceAndEthnic) %>% 
-  adorn_totals(where = c("row", "col")) %>% 
-  adorn_percentages(denominator = "all") %>% 
-  adorn_pct_formatting(digits = 1) %>% 
-  as.data.frame()
-a$EducLevel <- c("Under High School", "High School", "College", "Professional", "Master", "Doctor", "Total")
-colnames(a) <- c("EducLevel", "White", "Black", "Asian", "Hispanic", "Total")
-png("observedata.png")
-p<-tableGrob(a)
-grid.arrange(p)
-dev.off()
 ```
 
 
