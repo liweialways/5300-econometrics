@@ -99,7 +99,6 @@ new <- new[new['ESR'] != 2 & new['ESR'] != 5 & new['ESR'] != 3, ]
 new <- new[new['SEX'] == 2, ]
 # exclude the column work hours, self-care difficulty and disability, gender
 new <- new[c('SERIALNO','SPORDER', 'CIT','PERNP','SCHL','RAC1P','HISP','ESR', 'MAR', 'AGEP', 'COW')]
-summary(new)
 ```
 
 ```{r}
@@ -235,6 +234,7 @@ summary(new)
 ```
 ```{r}
 # observe data again:
+
 ## see the distribution of earnings vary by educational attainment
 edu_earnings <- new[, c("Earnings", "EducLevel")]
 for (rows in 1:nrow(edu_earnings)) {
