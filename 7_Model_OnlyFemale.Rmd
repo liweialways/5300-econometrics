@@ -265,8 +265,8 @@ edu_earnings %>%
   as.data.frame() %>% 
   spread(EducLevel1, Earnings) %>% 
   select(-id) %>% 
-  stargazer(digits = 2, header = F, 
-            title = "Table 1: Descriptive Statistics for Educational Attainment", 
+  stargazer(digits = 0 , header = F, 
+            title = "Table 1: Earnings Distribution in Educational Attainment", 
             type = "text", out = "Table_EducDescprtiveStats.html")
 
 ## see the earnings distribution by races:
@@ -293,8 +293,8 @@ race_earnings %>%
   as.data.frame() %>% 
   spread(RaceAndEthnic1, Earnings) %>% 
   select(-id) %>% 
-  stargazer(digits = 2, header = F, 
-            title = "Table 2: Descriptive Statistics for 4 Races", 
+  stargazer(digits = 0, header = F, 
+            title = "Table 2: Earnings Distribution in 4 Races", 
             type = "text", out = "Table_RaceDescprtiveStats.html")
 
 ```
